@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Pakere — Private parking in Berkeley</title>
+<script>
+try{ var _t=localStorage.getItem('pakere-theme'); if(!_t)_t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+    if(_t==='dark')document.documentElement.setAttribute('data-theme','dark'); }catch(e){}
+</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:opsz,wght@9..40,400..700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="overlay" id="overlay"></div>
+
+<!-- Drawer -->
+<aside class="drawer" id="drawer" aria-label="Menu">
+  <div class="drawer-in">
+    <div class="drawer-head"><span class="t">Menu</span><button class="x" id="closeDrawer" aria-label="Close">&times;</button></div>
+    <div class="acct"><div class="av">J</div><div><div class="nm">Jordan Reyes</div><div class="rl">Driver · Host · Berkeley</div></div></div>
+    <nav class="menu-nav">
+      <button class="menu-row" data-nav="map"><span class="ml"><span data-ic="pin"></span> Find parking</span><span class="chev">&rsaquo;</span></button>
+      <button class="menu-row" data-nav="driver"><span class="ml"><span data-ic="car"></span> Driver dashboard</span><span class="chev">&rsaquo;</span></button>
+      <button class="menu-row" data-nav="host"><span class="ml"><span data-ic="home"></span> Host dashboard</span><span class="chev">&rsaquo;</span></button>
+      <button class="menu-row strong" id="drawerList"><span class="ml"><span data-ic="plus"></span> List a spot</span><span class="chev">&rsaquo;</span></button>
+    </nav>
+    <div class="divider"></div>
+    <div class="menu-label">Appearance</div>
+    <button id="themeSwitch" class="theme-switch" type="button" role="switch" aria-checked="false">
+      <span class="ts-label">Dark mode</span><span class="ts-track"><span class="ts-thumb"></span></span>
+    </button>
+    <div class="divider"></div>
+    <p class="side-sub">Interactive demo. Booking, session, checkout, and hosting flows are fully clickable — no account or real payment needed.</p>
+  </div>
+</aside>
+
+<!-- Nav -->
+<nav class="nav" id="nav">
+  <div class="container nav-in">
+    <div class="brand" data-nav="map"><span class="mark"><svg viewBox="0 0 24 24"><path d="M6 3h7a5 5 0 0 1 0 10H10v8H6z"/></svg></span> Pakere</div>
+    <div class="nav-links">
+      <a data-nav="map">Find parking</a>
+      <a data-nav="driver">Driver</a>
+      <a data-nav="host">Host</a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-dark sm" id="navList"><span data-ic="plus"></span> List a spot</button>
+      <button class="btn icon-btn" id="openDrawer" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <!-- ===== MAP (home) ===== -->
+  <div class="page active" data-page="map">
+    <div class="map-wrap">
+      <div id="map"></div>
+      <div class="mapbar">
+        <div class="loc-chip"><span data-ic="pin"></span> <b>Berkeley, CA</b> · Today</div>
+        <button class="surge-chip" id="surgeChip"><span class="dotp"></span> Gameday off</button>
+      </div>
+      <aside class="spot-panel" id="spotPanel" aria-label="Available spots">
+        <div class="sp-head">
+          <button class="sp-close" id="spClose" aria-label="Close">&times;</button>
+          <h3 class="sp-title" id="spTitle">Spots available</h3>
+          <p class="sp-sub" id="spSub"></p>
+        </div>
+        <div class="sp-policy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          Exact address unlocks after you reserve.
+        </div>
+        <div class="sp-list" id="spList"></div>
+      </aside>
+      <div class="bottombar" id="bottombar">
+        <div class="session-mini" id="sessionMini" style="display:none"></div>
+        <button class="find-btn" id="findBtn"><span data-ic="search"></span> Find a Spot</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DRIVER DASHBOARD ===== -->
+  <div class="page" data-page="driver"><div class="dash" id="driverDash"></div></div>
+
+  <!-- ===== HOST DASHBOARD ===== -->
+  <div class="page" data-page="host"><div class="dash" id="hostDash"></div></div>
+</main>
+
+<!-- Find a Spot bottom sheet -->
+<div class="bsheet-veil" id="bsheetVeil"></div>
+<div class="bsheet" id="bsheet">
+  <div class="bsheet-inner">
+    <div class="grab"></div>
+    <div class="bsheet-hd">
+      <div><h3>Spots near you</h3><div class="sub" id="bsheetSub">Ranked by distance · tap to reserve</div></div>
+      <button class="btn sm" id="bsheetClose">Close</button>
+    </div>
+    <div class="filters" id="bsheetFilters"></div>
+    <div class="rec-scroll" id="recScroll"></div>
+  </div>
+</div>
+
+<!-- Modal (booking / session / checkout / list / cert) -->
+<div class="modal" id="modal"><div class="veil" id="modalVeil"></div><div class="msheet" id="msheet"></div></div>
+
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script defer src="app.js"></script>
+</body>
+</html>

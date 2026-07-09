@@ -1,0 +1,7 @@
+unzip pakere-repo.zip -d pakere
+cd pakere
+git init -b main
+git add .
+git commit -m "Initial commit"
+git remote add origin git@github.com:YOUR_USERNAME/pakere.git
+git push -u origin main
